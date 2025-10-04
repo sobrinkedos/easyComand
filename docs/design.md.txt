@@ -1,0 +1,212 @@
+Com certeza! Vou descrever as tabelas criadas, seus objetivos e como elas se relacionam, seguindo a jornada de um usuário no sistema.
+
+**Tabelas Globais (Configurações do Sistema)**
+
+1.  **`establishment_types`**:
+    *   **Objetivo**: Armazena os tipos de estabelecimentos que o sistema pode gerenciar (ex: Restaurante, Bar, Pizzaria).
+    *   **Relação**: A tabela `establishments` referencia esta tabela para definir o tipo de cada estabelecimento.
+
+2.  **`subscription_plans`**:
+    *   **Objetivo**: Define os diferentes planos de assinatura (Básico, Premium, Enterprise) com suas funcionalidades e preços.
+    *   **Relação**: A tabela `establishments` referencia esta tabela para indicar qual plano cada estabelecimento assinou.
+
+3.  **`roles`**:
+    *   **Objetivo**: Lista as funções dos usuários dentro de um estabelecimento (ex: Proprietário, Gerente, Garçom, Cozinheiro).
+    *   **Relação**: A tabela `users` referencia esta tabela para atribuir uma função a cada funcionário.
+
+4.  **`permissions`**:
+    *   **Objetivo**: Detalha as permissões granulares que podem ser concedidas (ex: criar produto, visualizar relatórios).
+    *   **Relação**: A tabela `role_permissions` associa permissões a funções.
+
+5.  **`role_permissions`**:
+    *   **Objetivo**: Conecta as funções (`roles`) às permissões (`permissions`), definindo o que cada função pode fazer.
+    *   **Relação**: Relaciona `roles` e `permissions`.
+
+**Jornada do Usuário: Configuração do Estabelecimento e Usuários**
+
+Quando um novo estabelecimento se cadastra, ele escolhe um `establishment_type` e um `subscription_plan`. O proprietário do estabelecimento é cadastrado na tabela `users` com a `role` de "Proprietário".
+
+**Tabelas de Estabelecimento e Usuários (Multi-tenant)**
+
+6.  **`establishments`**:
+    *   **Objetivo**: É a tabela central para cada restaurante ou bar. Armazena todos os dados cadastrais (nome, CNPJ, endereço), configurações (taxa de serviço, aceita delivery/reservas) e o status operacional.
+    *   **Relação**: É a "raiz" de quase todas as outras tabelas específicas de um estabelecimento, garantindo o isolamento dos dados por meio do `establishment_id`. Referencia `establishment_types` e `subscription_plans`.
+
+7.  **`operating_hours`**:
+    *   **Objetivo**: Permite configurar os horários de funcionamento para cada dia da semana de um `establishment`.
+    *   **Relação**: Referencia `establishments`.
+
+8.  **`users`**:
+    *   **Objetivo**: Armazena os dados dos funcionários de cada `establishment` (nome, email, telefone, salário, data de admissão, status). É integrada com o sistema de autenticação.
+    *   **Relação**: Referencia `establishments` e `roles`. Muitos registros de atividades e transações no sistema são associados a um `user`.
+
+9.  **`user_activity_log`**:
+    *   **Objetivo**: Registra todas as ações importantes realizadas por um `user` dentro de um `establishment` para fins de auditoria e segurança.
+    *   **Relação**: Referencia `users` e `establishments`.
+
+**Jornada do Usuário: Gestão de Ambiente e Mesas**
+
+Um gerente ou proprietário configura os ambientes e mesas do seu `establishment`.
+
+10. **`environments`**:
+    *   **Objetivo**: Permite criar e nomear diferentes áreas dentro do `establishment` (ex: Salão Principal, Terraço, Área VIP), com capacidade e coordenadas para layout visual.
+    *   **Relação**: Referencia `establishments`. A tabela `tables` referencia `environments`.
+
+11. **`tables`**:
+    *   **Objetivo**: Gerencia as mesas físicas de um `establishment`, incluindo número, formato, capacidade, status (disponível, ocupada, reservada) e localização visual.
+    *   **Relação**: Referencia `establishments` e `environments`. A tabela `orders` e `reservations` podem referenciar `tables`.
+
+12. **`reservations`**:
+    *   **Objetivo**: Armazena os detalhes das reservas de clientes para um `establishment` (nome do cliente, contato, número de pessoas, data, hora, status).
+    *   **Relação**: Referencia `establishments` e opcionalmente `tables`.
+
+**Jornada do Usuário: Cardápio e Gestão de Produtos**
+
+Um gerente ou proprietário cria e organiza o cardápio do `establishment`.
+
+13. **`menu_categories`**:
+    *   **Objetivo**: Organiza os produtos do cardápio em categorias (ex: Entradas, Pratos Principais, Bebidas), com opções de personalização visual e disponibilidade temporal.
+    *   **Relação**: Referencia `establishments`. A tabela `products` referencia `menu_categories`.
+
+14. **`products`**:
+    *   **Objetivo**: Contém informações detalhadas de cada item do cardápio (nome, descrição, ingredientes, preço, informações nutricionais, classificações especiais como vegetariano).
+    *   **Relação**: Referencia `establishments` e `menu_categories`. É referenciada por `product_images`, `product_variations`, `combo_products`, `order_items` e `recipes`.
+
+15. **`product_images`**:
+    *   **Objetivo**: Armazena as URLs das imagens associadas a cada `product`.
+    *   **Relação**: Referencia `products`.
+
+16. **`product_variations`**:
+    *   **Objetivo**: Define tipos de variações para um `product` (ex: Tamanho, Sabor, Adicional).
+    *   **Relação**: Referencia `products`. A tabela `variation_options` referencia `product_variations`.
+
+17. **`variation_options`**:
+    *   **Objetivo**: Lista as opções específicas para cada `product_variation` (ex: Pequeno, Médio, Grande para "Tamanho"; Mal Passado, Bem Passado para "Preparo"), com ajustes de preço.
+    *   **Relação**: Referencia `product_variations`. É referenciada por `order_item_variations`.
+
+18. **`combos`**:
+    *   **Objetivo**: Permite criar agrupamentos de `products` com descontos específicos.
+    *   **Relação**: Referencia `establishments`. A tabela `combo_products` referencia `combos`.
+
+19. **`combo_products`**:
+    *   **Objetivo**: Associa `products` a um `combo`, especificando a quantidade de cada produto no combo.
+    *   **Relação**: Relaciona `combos` e `products`.
+
+20. **`promotions`**:
+    *   **Objetivo**: Gerencia diferentes tipos de promoções (happy hour, desconto por quantidade, fidelidade) com datas de início/fim e valores de desconto.
+    *   **Relação**: Referencia `establishments`.
+
+**Jornada do Usuário: Sistema de Pedidos e Comandas**
+
+Garçons, caixas ou o sistema de delivery criam e gerenciam pedidos.
+
+21. **`orders`**:
+    *   **Objetivo**: Representa uma comanda ou pedido de cliente. Armazena o tipo de serviço (local, balcão, delivery, retirada), a mesa (`tables`) ou garçom (`users`) associado, endereço de entrega, status, subtotais, taxas e o valor total.
+    *   **Relação**: Referencia `establishments`, `tables`, `users` (garçom) e `customers`. É referenciada por `order_items`, `cash_session_movements` e `order_payments`.
+
+22. **`order_items`**:
+    *   **Objetivo**: Detalha os `products` incluídos em cada `order`, com quantidade, preço unitário, preço total, status individual do item (pendente, preparando, pronto) e observações especiais.
+    *   **Relação**: Referencia `orders` e `products`. É referenciada por `order_item_variations`.
+
+23. **`order_item_variations`**:
+    *   **Objetivo**: Armazena as `variation_options` selecionadas para um `order_item` específico, com seus ajustes de preço.
+    *   **Relação**: Relaciona `order_items` e `variation_options`.
+
+**Jornada do Usuário: Gestão de Estoque**
+
+Um gerente ou responsável pelo estoque gerencia fornecedores, itens e movimentações.
+
+24. **`suppliers`**:
+    *   **Objetivo**: Gerencia informações completas sobre os fornecedores de um `establishment` (nome, CNPJ/CPF, contatos, endereço, condições comerciais, avaliação).
+    *   **Relação**: Referencia `establishments`. É referenciada por `stock_items` e `stock_batches`.
+
+25. **`stock_categories`**:
+    *   **Objetivo**: Categoriza os itens de estoque (ex: Carnes, Bebidas, Descartáveis), permitindo subcategorias.
+    *   **Relação**: Referencia `establishments` e pode referenciar a si mesma para hierarquia. A tabela `stock_items` referencia `stock_categories`.
+
+26. **`stock_items`**:
+    *   **Objetivo**: Armazena informações detalhadas sobre cada item no estoque de um `establishment` (nome, descrição, código de barras, unidade de medida, localização, nível mínimo de estoque, fornecedor preferencial, custo atual).
+    *   **Relação**: Referencia `establishments`, `stock_categories` e `suppliers`. É referenciada por `stock_batches`, `stock_movements`, `recipe_ingredients` e `quality_control_checks`.
+
+27. **`stock_batches`**:
+    *   **Objetivo**: Gerencia lotes específicos de `stock_items`, especialmente para produtos perecíveis, incluindo número do lote, quantidade, data de validade e preço de compra.
+    *   **Relação**: Referencia `stock_items` e `suppliers`.
+
+28. **`stock_movements`**:
+    *   **Objetivo**: Registra todas as movimentações de `stock_items` (entrada, saída, ajuste, perda, transferência), com quantidade, documento de referência, `user` responsável, motivo e custo.
+    *   **Relação**: Referencia `establishments`, `stock_items` e `users`.
+
+29. **`recipes`**:
+    *   **Objetivo**: Define a composição de um `product` do cardápio, listando os ingredientes necessários.
+    *   **Relação**: Referencia `establishments` e `products`. A tabela `recipe_ingredients` referencia `recipes`.
+
+30. **`recipe_ingredients`**:
+    *   **Objetivo**: Associa `stock_items` como ingredientes a uma `recipe`, especificando a quantidade exata necessária.
+    *   **Relação**: Relaciona `recipes` e `stock_items`.
+
+**Jornada do Usuário: Sistema Financeiro**
+
+O caixa e o gerente controlam as finanças do `establishment`.
+
+31. **`payment_methods`**:
+    *   **Objetivo**: Configura as formas de pagamento aceitas por um `establishment` (dinheiro, cartão de crédito/débito, PIX, vale-refeição), incluindo taxas de operadora e prazos de recebimento.
+    *   **Relação**: Referencia `establishments`. É referenciada por `cash_session_movements` e `order_payments`.
+
+32. **`cash_sessions`**:
+    *   **Objetivo**: Gerencia as sessões diárias de caixa de um `establishment`, registrando o `user` que abriu, saldo inicial, saldo de fechamento e status.
+    *   **Relação**: Referencia `establishments` e `users`. A tabela `cash_session_movements` referencia `cash_sessions`.
+
+33. **`cash_session_movements`**:
+    *   **Objetivo**: Registra todas as movimentações financeiras dentro de uma `cash_session` (vendas, sangrias, reforços, cancelamentos, despesas), com valor, `payment_method` e descrição.
+    *   **Relação**: Referencia `cash_sessions`, `payment_methods` e `orders`.
+
+34. **`order_payments`**:
+    *   **Objetivo**: Registra os pagamentos efetuados para um `order`, suportando pagamentos parciais e divididos entre diferentes `payment_methods`.
+    *   **Relação**: Relaciona `orders` e `payment_methods`.
+
+35. **`expenses`**:
+    *   **Objetivo**: Registra as despesas operacionais de um `establishment` (aluguel, contas de consumo), com descrição, valor, data e `user` responsável pelo pagamento.
+    *   **Relação**: Referencia `establishments` e `users`.
+
+**Jornada do Usuário: Funcionalidades Especiais e Relatórios**
+
+Gerentes e proprietários utilizam estas funcionalidades para otimizar o negócio e analisar dados.
+
+36. **`customers`**:
+    *   **Objetivo**: Gerencia dados de clientes de um `establishment` para programas de fidelidade e personalização (nome, contato, data de nascimento, preferências, total gasto, pontos de fidelidade).
+    *   **Relação**: Referencia `establishments`. É referenciada por `orders`, `customer_loyalty_transactions`, `events` e `customer_feedback`.
+
+37. **`loyalty_programs`**:
+    *   **Objetivo**: Define as regras dos programas de fidelidade para um `establishment` (nome, pontos por unidade monetária gasta).
+    *   **Relação**: Referencia `establishments`. É referenciada por `loyalty_rewards` e `customer_loyalty_transactions`.
+
+38. **`loyalty_rewards`**:
+    *   **Objetivo**: Define as recompensas que podem ser resgatadas com pontos de fidelidade em um `loyalty_program`.
+    *   **Relação**: Referencia `loyalty_programs`. É referenciada por `customer_loyalty_transactions`.
+
+39. **`customer_loyalty_transactions`**:
+    *   **Objetivo**: Rastreia os movimentos de pontos de fidelidade dos `customers` (ganhos ou resgatados), associando-os a `orders` ou `loyalty_rewards`.
+    *   **Relação**: Referencia `customers`, `loyalty_programs`, `orders` e `loyalty_rewards`.
+
+40. **`events`**:
+    *   **Objetivo**: Gerencia eventos especiais e reservas privadas em um `establishment` (aniversários, confraternizações), com detalhes como data, hora, capacidade e preço por pessoa.
+    *   **Relação**: Referencia `establishments` e `customers`.
+
+41. **`delivery_platforms`**:
+    *   **Objetivo**: Configura a integração com plataformas de delivery externas (iFood, Uber Eats), incluindo nome, percentual de comissão e chave de API.
+    *   **Relação**: Referencia `establishments`. A tabela `delivery_platform_orders` referencia `delivery_platforms`.
+
+42. **`delivery_platform_orders`**:
+    *   **Objetivo**: Rastreia `orders` que se originaram de `delivery_platforms` externas, com o ID do pedido externo, comissão e status de entrega.
+    *   **Relação**: Referencia `orders` e `delivery_platforms`.
+
+43. **`customer_feedback`**:
+    *   **Objetivo**: Coleta feedback de `customers` sobre `products` e serviços de um `establishment`, com avaliação e comentários.
+    *   **Relação**: Referencia `establishments`, `customers` e `orders`.
+
+44. **`quality_control_checks`**:
+    *   **Objetivo**: Registra verificações de controle de qualidade (temperatura, origem de ingredientes, validade de licenças) para `stock_items` ou `products`, com resultados e `user` responsável.
+    *   **Relação**: Referencia `establishments`, `stock_items`, `products` e `users`.
+
+Este design abrangente permite que o sistema gerencie todas as operações de um restaurante ou bar de forma eficiente e segura, com a flexibilidade necessária para diferentes modelos de negócio.
+
