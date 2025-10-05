@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_7f94aacc384bbbc133cf11ba31b1aed0f6926954"
+      },
+      "disabled": false,
+      "autoApprove": [
+        "list_tables",
+        "describe_table",
+        "run_query",
+        "execute_sql",
+        "list_projects",
+        "get_project",
+        "apply_migration",
+        "list_migrations",
+        "get_logs",
+        "get_anon_key"
+      ]
+    }
+  }
+}
