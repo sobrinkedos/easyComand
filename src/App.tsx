@@ -10,6 +10,8 @@ import { ForgotPasswordForm } from './components/auth/ForgotPasswordForm';
 import { ResetPasswordForm } from './components/auth/ResetPasswordForm';
 import { ProtectedRoute, PublicRoute } from './components/auth/ProtectedRoute';
 import { Dashboard } from './components/dashboard/Dashboard';
+import { DesignSystemShowcase } from './components/design-system/DesignSystemShowcase';
+import { ComingSoon } from './components/pages/ComingSoon';
 import { CheckCircle, XCircle, AlertTriangle, Database, Globe, Settings, Zap } from 'lucide-react';
 
 function Home() {
@@ -37,12 +39,12 @@ function Home() {
   }, []);
 
   // Verificar se Supabase está configurado corretamente
-  const isSupabaseConfigured = connectionStatus.supabase?.success || 
-    (connectionStatus.supabase?.error && 
-     !connectionStatus.supabase.error.includes('Invalid supabaseUrl'));
+  // const isSupabaseConfigured = connectionStatus.supabase?.success || 
+  //   (connectionStatus.supabase?.error && 
+  //    !connectionStatus.supabase.error.includes('Invalid supabaseUrl'));
 
-  const needsSupabaseSetup = connectionStatus.supabase?.error && 
-    connectionStatus.supabase.error.includes('Invalid supabaseUrl');
+  // const needsSupabaseSetup = connectionStatus.supabase?.error && 
+  //   connectionStatus.supabase.error.includes('Invalid supabaseUrl');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
@@ -333,6 +335,61 @@ function App() {
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/design-system" element={
+          <ProtectedRoute>
+            <DesignSystemShowcase />
+          </ProtectedRoute>
+        } />
+        <Route path="/balcao" element={
+          <ProtectedRoute>
+            <ComingSoon title="Balcão" description="Sistema de atendimento rápido no balcão" icon="🛒" />
+          </ProtectedRoute>
+        } />
+        <Route path="/mesas" element={
+          <ProtectedRoute>
+            <ComingSoon title="Mesas" description="Gestão de mesas e comandas" icon="🪑" />
+          </ProtectedRoute>
+        } />
+        <Route path="/cozinha" element={
+          <ProtectedRoute>
+            <ComingSoon title="Cozinha" description="Interface de visualização para a cozinha" icon="👨‍🍳" />
+          </ProtectedRoute>
+        } />
+        <Route path="/bar" element={
+          <ProtectedRoute>
+            <ComingSoon title="Bar" description="Interface de visualização para o bar" icon="🍹" />
+          </ProtectedRoute>
+        } />
+        <Route path="/caixa" element={
+          <ProtectedRoute>
+            <ComingSoon title="Caixa" description="Gestão de caixa e pagamentos" icon="💰" />
+          </ProtectedRoute>
+        } />
+        <Route path="/cardapio" element={
+          <ProtectedRoute>
+            <ComingSoon title="Cardápio" description="Gestão de produtos e categorias" icon="📋" />
+          </ProtectedRoute>
+        } />
+        <Route path="/estoque" element={
+          <ProtectedRoute>
+            <ComingSoon title="Estoque" description="Controle de estoque e inventário" icon="📦" />
+          </ProtectedRoute>
+        } />
+        <Route path="/clientes" element={
+          <ProtectedRoute>
+            <ComingSoon title="Clientes" description="Gestão de clientes e fidelidade" icon="👥" />
+          </ProtectedRoute>
+        } />
+        <Route path="/relatorios" element={
+          <ProtectedRoute>
+            <ComingSoon title="Relatórios" description="Análises e métricas do negócio" icon="📊" />
+          </ProtectedRoute>
+        } />
+        <Route path="/configuracoes" element={
+          <ProtectedRoute>
+            <ComingSoon title="Configurações" description="Configurações do sistema" icon="⚙️" />
           </ProtectedRoute>
         } />
         <Route path="/mcp-demo" element={<MCPDemoPage />} />

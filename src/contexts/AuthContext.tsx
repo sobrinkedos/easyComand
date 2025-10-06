@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { mcp } from '../lib/supabase-mcp'
 import type { User, Session } from '@supabase/supabase-js'
 
