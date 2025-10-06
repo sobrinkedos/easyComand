@@ -103,7 +103,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Verificar sessão com timeout
       const sessionData = await withTimeout(
         mcp.supabaseClient.auth.getSession(),
-        2000
+        5000
       )
       console.log('📋 [3/5] Sessão:', sessionData?.data?.session ? 'Ativa ✅' : 'Inativa ❌')
       
@@ -115,7 +115,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           .select('establishment_id,full_name,role_id')
           .eq('id', userId)
           .single(),
-        2000
+        5000
       )
 
       console.log('📊 [5/5] Resultado:', { data: result.data, error: result.error })
@@ -263,10 +263,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log('🔄 Mudança de estado auth:', event, 'session:', !!session)
         
         try {
+          // Ignorar INITIAL_SESSION pois checkSession já cuidou disso
+          if (event === 'INITIAL_SESSION') {
+            console.log('⏭️ Ignorando INITIAL_SESSION (já processado por checkSession)')
+            return
+          }
+          
           if (event === 'SIGNED_IN' && session) {
             setSession(session)
             setUser(session.user)
-            await loadUserData(session.user.id)
+            // Só carregar dados se ainda não temos establishmentId
+            if (!establishmentId) {
+              await loadUserData(session.user.id)
+            } else {
+              console.log('⏭️ establishmentId já existe, pulando loadUserData')
+            }
           } else if (event === 'SIGNED_OUT') {
             setSession(null)
             setUser(null)
