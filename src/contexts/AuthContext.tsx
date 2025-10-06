@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { mcp } from '../lib/supabase-mcp'
+import { supabase } from '../lib/supabase'
 import type { User, Session } from '@supabase/supabase-js'
 
 // Tipos do contexto de autenticação
@@ -48,28 +49,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   const checkSession = async () => {
     try {
+      console.log('🔍 Verificando sessão...')
       setLoading(true)
       setError(null)
 
       // Verificar sessão atual
       const sessionResult = await mcp.auth.getSession()
+      console.log('📋 Resultado da sessão:', sessionResult)
       
       if (sessionResult.success && sessionResult.data?.session) {
         const { session: currentSession } = sessionResult.data
+        console.log('✅ Sessão encontrada, usuário:', currentSession.user.email)
         setSession(currentSession)
         setUser(currentSession.user)
 
         // Buscar dados do usuário na tabela public.users
         await loadUserData(currentSession.user.id)
       } else {
+        console.log('⚠️ Nenhuma sessão ativa')
         setSession(null)
         setUser(null)
         setEstablishmentId(null)
       }
     } catch (err) {
-      console.error('Erro ao verificar sessão:', err)
+      console.error('❌ Erro ao verificar sessão:', err)
       setError('Erro ao verificar autenticação')
     } finally {
+      console.log('✅ checkSession finalizado, setLoading(false)')
       setLoading(false)
     }
   }
@@ -78,23 +84,58 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Carregar dados do usuário incluindo establishment_id
    */
   const loadUserData = async (userId: string) => {
+    console.log('🚨 VERSÃO NOVA DO CÓDIGO - TIMESTAMP:', Date.now())
+    console.log('🔍 [1/5] loadUserData iniciado para:', userId)
+    
     try {
-      const userDataResult = await mcp.select('users', {
-        select: 'establishment_id, full_name, role_id',
-        filter: { id: userId },
-        limit: 1
-      })
+      console.log('🔍 [2/5] Verificando sessão...')
+      
+      // Timeout wrapper para evitar travamento
+      const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+        return Promise.race([
+          promise,
+          new Promise<T>((_, reject) => 
+            setTimeout(() => reject(new Error(`Timeout após ${timeoutMs}ms`)), timeoutMs)
+          )
+        ])
+      }
+      
+      // Verificar sessão com timeout
+      const sessionData = await withTimeout(
+        mcp.supabaseClient.auth.getSession(),
+        2000
+      )
+      console.log('📋 [3/5] Sessão:', sessionData?.data?.session ? 'Ativa ✅' : 'Inativa ❌')
+      
+      // Fazer query com timeout
+      console.log('🔍 [4/5] Executando query na tabela users...')
+      const result = await withTimeout(
+        mcp.supabaseClient
+          .from('users')
+          .select('establishment_id,full_name,role_id')
+          .eq('id', userId)
+          .single(),
+        2000
+      )
 
-      if (userDataResult.success && userDataResult.data?.[0]) {
-        const userData = userDataResult.data[0] as any
-        setEstablishmentId(userData.establishment_id)
-        console.log('✅ Dados do usuário carregados:', userData)
+      console.log('📊 [5/5] Resultado:', { data: result.data, error: result.error })
+
+      if (result.error) {
+        console.error('❌ Erro ao buscar usuário:', result.error)
+        setEstablishmentId(null)
+        return
+      }
+
+      if (result.data) {
+        console.log('✅ Dados carregados com sucesso:', result.data)
+        setEstablishmentId(result.data.establishment_id)
       } else {
-        console.log('⚠️ Usuário não encontrado na tabela public.users')
+        console.log('⚠️ Nenhum dado retornado')
         setEstablishmentId(null)
       }
     } catch (err) {
-      console.error('Erro ao carregar dados do usuário:', err)
+      console.error('❌ Erro em loadUserData:', err)
+      setEstablishmentId(null)
     }
   }
 
@@ -203,28 +244,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Verificar sessão ao montar o componente
   useEffect(() => {
-    checkSession()
+    console.log('🚀 AuthProvider montado, iniciando checkSession')
+    
+    // Timeout de segurança: se após 5 segundos ainda estiver loading, forçar false
+    const safetyTimeout = setTimeout(() => {
+      console.warn('⚠️ Timeout de segurança: forçando loading = false após 5s')
+      setLoading(false)
+    }, 5000)
+    
+    checkSession().finally(() => {
+      clearTimeout(safetyTimeout)
+    })
 
     // Escutar mudanças de autenticação
+    console.log('👂 Configurando listener onAuthStateChange')
     const { data: { subscription } } = mcp.supabaseClient.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔄 Mudança de estado auth:', event)
+        console.log('🔄 Mudança de estado auth:', event, 'session:', !!session)
         
-        if (event === 'SIGNED_IN' && session) {
-          setSession(session)
-          setUser(session.user)
-          await loadUserData(session.user.id)
-        } else if (event === 'SIGNED_OUT') {
-          setSession(null)
-          setUser(null)
-          setEstablishmentId(null)
+        try {
+          if (event === 'SIGNED_IN' && session) {
+            setSession(session)
+            setUser(session.user)
+            await loadUserData(session.user.id)
+          } else if (event === 'SIGNED_OUT') {
+            setSession(null)
+            setUser(null)
+            setEstablishmentId(null)
+          }
+        } catch (err) {
+          console.error('❌ Erro no onAuthStateChange:', err)
+        } finally {
+          console.log('✅ onAuthStateChange finalizado, setLoading(false)')
+          setLoading(false)
         }
-        
-        setLoading(false)
       }
     )
 
     return () => {
+      console.log('🔌 Desconectando listener onAuthStateChange')
+      clearTimeout(safetyTimeout)
       subscription.unsubscribe()
     }
   }, [])
