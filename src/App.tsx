@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button } fro
 import { LoadingSpinner } from './components/ui/loading';
 import { SupabaseMCPDemo } from './components/SupabaseMCPDemo';
 import { AuthProvider } from './contexts/AuthContext';
+import { SidebarProvider } from './contexts/SidebarContext';
 import { AuthPage } from './components/auth/AuthPage';
 import { ForgotPasswordForm } from './components/auth/ForgotPasswordForm';
 import { ResetPasswordForm } from './components/auth/ResetPasswordForm';
@@ -311,7 +312,8 @@ function MCPDemoPage() {
 function App() {
   return (
     <AuthProvider>
-      <Routes>
+      <SidebarProvider>
+        <Routes>
         <Route path="/" element={
           <PublicRoute>
             <Home />
@@ -394,7 +396,8 @@ function App() {
         } />
         <Route path="/mcp-demo" element={<MCPDemoPage />} />
         {/* Outras rotas serão adicionadas aqui */}
-      </Routes>
+        </Routes>
+      </SidebarProvider>
     </AuthProvider>
   );
 }
