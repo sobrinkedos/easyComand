@@ -118,6 +118,7 @@ export function useStock() {
   const [alerts, setAlerts] = useState<StockAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
   // Carregar produtos
   const loadProducts = async () => {
@@ -417,12 +418,41 @@ export function useStock() {
     };
   };
 
-  // Carregar dados ao montar
+  // Carregar dados ao montar (apenas uma vez)
   useEffect(() => {
-    if (establishmentId) {
-      loadAll();
-    }
-  }, [establishmentId]);
+    let mounted = true;
+    
+    const init = async () => {
+      if (establishmentId && !initialized && mounted) {
+        console.log('🔵 useStock: Carregando dados iniciais...', { establishmentId });
+        setLoading(true);
+        try {
+          await loadAll();
+          if (mounted) {
+            setInitialized(true);
+            console.log('✅ useStock: Dados carregados com sucesso');
+          }
+        } catch (err) {
+          console.error('❌ useStock: Erro ao carregar dados:', err);
+          if (mounted) {
+            setError('Erro ao carregar dados do estoque');
+          }
+        } finally {
+          if (mounted) {
+            setLoading(false);
+          }
+        }
+      } else if (!establishmentId) {
+        console.log('⚠️ useStock: Aguardando establishmentId...');
+      }
+    };
+    
+    init();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [establishmentId, initialized]);
 
   return {
     products,
