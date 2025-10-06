@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { usePermission } from '@/hooks/usePermission';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -32,17 +33,94 @@ export interface SidebarMenuItem {
 }
 
 const menuItems: SidebarMenuItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', iconColor: 'text-blue-400' },
-  { id: 'balcao', label: 'Balcão', icon: ShoppingBag, path: '/balcao', iconColor: 'text-amber-400' },
-  { id: 'mesas', label: 'Mesas', icon: Utensils, path: '/mesas', iconColor: 'text-emerald-400' },
-  { id: 'cozinha', label: 'Cozinha', icon: ChefHat, path: '/cozinha', iconColor: 'text-red-400' },
-  { id: 'bar', label: 'Bar', icon: Wine, path: '/bar', iconColor: 'text-purple-400' },
-  { id: 'caixa', label: 'Caixa', icon: DollarSign, path: '/caixa', iconColor: 'text-teal-400' },
-  { id: 'cardapio', label: 'Cardápio', icon: BookOpen, path: '/cardapio', iconColor: 'text-orange-400' },
-  { id: 'estoque', label: 'Estoque', icon: Package, path: '/estoque', iconColor: 'text-indigo-400' },
-  { id: 'clientes', label: 'Clientes', icon: Users, path: '/clientes', iconColor: 'text-pink-400' },
-  { id: 'relatorios', label: 'Relatórios', icon: BarChart3, path: '/relatorios', iconColor: 'text-cyan-400' },
-  { id: 'configuracoes', label: 'Configurações', icon: Settings, path: '/configuracoes', iconColor: 'text-slate-400' },
+  { 
+    id: 'dashboard', 
+    label: 'Dashboard', 
+    icon: LayoutDashboard, 
+    path: '/dashboard', 
+    iconColor: 'text-blue-400',
+    permissions: ['view_dashboard']
+  },
+  { 
+    id: 'balcao', 
+    label: 'Balcão', 
+    icon: ShoppingBag, 
+    path: '/balcao', 
+    iconColor: 'text-amber-400',
+    permissions: ['manage_counter']
+  },
+  { 
+    id: 'mesas', 
+    label: 'Mesas', 
+    icon: Utensils, 
+    path: '/mesas', 
+    iconColor: 'text-emerald-400',
+    permissions: ['manage_tables']
+  },
+  { 
+    id: 'cozinha', 
+    label: 'Cozinha', 
+    icon: ChefHat, 
+    path: '/cozinha', 
+    iconColor: 'text-red-400',
+    permissions: ['view_kitchen']
+  },
+  { 
+    id: 'bar', 
+    label: 'Bar', 
+    icon: Wine, 
+    path: '/bar', 
+    iconColor: 'text-purple-400',
+    permissions: ['view_bar']
+  },
+  { 
+    id: 'caixa', 
+    label: 'Caixa', 
+    icon: DollarSign, 
+    path: '/caixa', 
+    iconColor: 'text-teal-400',
+    permissions: ['manage_cashier']
+  },
+  { 
+    id: 'cardapio', 
+    label: 'Cardápio', 
+    icon: BookOpen, 
+    path: '/cardapio', 
+    iconColor: 'text-orange-400',
+    permissions: ['manage_menu']
+  },
+  { 
+    id: 'estoque', 
+    label: 'Estoque', 
+    icon: Package, 
+    path: '/estoque', 
+    iconColor: 'text-indigo-400',
+    permissions: ['manage_stock']
+  },
+  { 
+    id: 'clientes', 
+    label: 'Clientes', 
+    icon: Users, 
+    path: '/clientes', 
+    iconColor: 'text-pink-400',
+    permissions: ['manage_customers']
+  },
+  { 
+    id: 'relatorios', 
+    label: 'Relatórios', 
+    icon: BarChart3, 
+    path: '/relatorios', 
+    iconColor: 'text-cyan-400',
+    permissions: ['view_reports']
+  },
+  { 
+    id: 'configuracoes', 
+    label: 'Configurações', 
+    icon: Settings, 
+    path: '/configuracoes', 
+    iconColor: 'text-slate-400',
+    permissions: ['manage_settings']
+  },
 ];
 
 interface SidebarProps {
@@ -54,12 +132,34 @@ export function Sidebar({ className }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { permissions, isLoading: permissionsLoading } = usePermission();
+
+  console.log('🎨 Sidebar renderizado - permissionsLoading:', permissionsLoading, 'permissions:', permissions);
 
   const toggleMobile = () => setIsMobileOpen(!isMobileOpen);
 
   const handleSignOut = async () => {
     await signOut();
   };
+
+  // Filtrar itens do menu baseado nas permissões do usuário
+  const filteredMenuItems = useMemo(() => {
+    // Se ainda está carregando, retornar array vazio
+    if (permissionsLoading) {
+      return [];
+    }
+
+    // Filtrar itens do menu
+    return menuItems.filter(item => {
+      // Se o item não tem permissões definidas, mostrar para todos
+      if (!item.permissions || item.permissions.length === 0) {
+        return true;
+      }
+
+      // Verificar se o usuário tem pelo menos uma das permissões necessárias
+      return item.permissions.some(permission => permissions.includes(permission));
+    });
+  }, [permissionsLoading, permissions]);
 
   return (
     <>
@@ -114,48 +214,58 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4 scrollbar-hide">
           <ul className="space-y-1 px-3">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+            {permissionsLoading ? (
+              <li className="px-3 py-2 text-slate-400 text-sm">
+                Carregando menu...
+              </li>
+            ) : filteredMenuItems.length === 0 ? (
+              <li className="px-3 py-2 text-slate-400 text-sm">
+                Nenhum módulo disponível
+              </li>
+            ) : (
+              filteredMenuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
 
-              return (
-                <li key={item.id}>
-                  <Link
-                    to={item.path}
-                    onClick={() => setIsMobileOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
-                      isActive
-                        ? "bg-slate-800 text-white font-medium"
-                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                    )}
-                    title={isCollapsed ? item.label : undefined}
-                  >
-                    <Icon
+                return (
+                  <li key={item.id}>
+                    <Link
+                      to={item.path}
+                      onClick={() => setIsMobileOpen(false)}
                       className={cn(
-                        "h-5 w-5 flex-shrink-0 transition-colors",
-                        item.iconColor
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
+                        isActive
+                          ? "bg-slate-800 text-white font-medium"
+                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
                       )}
-                    />
-                    {!isCollapsed && (
-                      <>
-                        <span className="flex-1">{item.label}</span>
-                        {item.badge !== undefined && item.badge > 0 && (
-                          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-accent-500 text-white">
-                            {item.badge}
-                          </span>
+                      title={isCollapsed ? item.label : undefined}
+                    >
+                      <Icon
+                        className={cn(
+                          "h-5 w-5 flex-shrink-0 transition-colors",
+                          item.iconColor
                         )}
-                      </>
-                    )}
-                    {isCollapsed && item.badge !== undefined && item.badge > 0 && (
-                      <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs font-semibold rounded-full bg-accent-500 text-white">
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
+                      />
+                      {!isCollapsed && (
+                        <>
+                          <span className="flex-1">{item.label}</span>
+                          {item.badge !== undefined && item.badge > 0 && (
+                            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-accent-500 text-white">
+                              {item.badge}
+                            </span>
+                          )}
+                        </>
+                      )}
+                      {isCollapsed && item.badge !== undefined && item.badge > 0 && (
+                        <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs font-semibold rounded-full bg-accent-500 text-white">
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })
+            )}
           </ul>
         </nav>
 

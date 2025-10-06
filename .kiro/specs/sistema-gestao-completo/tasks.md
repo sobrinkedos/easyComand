@@ -19,7 +19,11 @@ Este plano divide a implementação em tarefas incrementais, priorizando funcion
   - Criar componentes base do design system (Cards, Badges, Status indicators)
   - _Requisitos: 11, 12_
 
-- [ ] 2. Estender Schema do Banco de Dados
+- [x] 2. Estender Schema do Banco de Dados
+
+
+
+
   - Criar migration para tabela `tabs` (comandas)
   - Criar migration para tabelas de caixa (`cash_sessions`, `cash_movements`, `payments`)
   - Criar migration para tabela `user_devices` (push notifications)
@@ -28,7 +32,12 @@ Este plano divide a implementação em tarefas incrementais, priorizando funcion
   - Criar funções auxiliares SQL necessárias
   - _Requisitos: 2, 3, 6, 7, 8_
 
-- [ ] 3. Implementar Sistema de Permissões no Frontend
+- [x] 3. Implementar Sistema de Permissões no Frontend
+
+
+
+
+
   - Criar hook `usePermission` para verificar permissões do usuário
   - Criar componente `ProtectedRoute` baseado em permissões
   - Criar componente `ProtectedComponent` para elementos condicionais

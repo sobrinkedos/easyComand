@@ -1,5 +1,5 @@
-// Exportações dos componentes de autenticação
-export { AuthPage } from './AuthPage'
-export { LoginForm } from './LoginForm'
-export { SignUpForm } from './SignUpForm'
-export { ProtectedRoute, PublicRoute } from './ProtectedRoute'
+export { ProtectedRoute, PublicRoute } from './ProtectedRoute';
+export { ProtectedComponent, AccessDenied } from './ProtectedComponent';
+export { AuthPage } from './AuthPage';
+export { ForgotPasswordForm } from './ForgotPasswordForm';
+export { ResetPasswordForm } from './ResetPasswordForm';

@@ -13,6 +13,8 @@ import { ProtectedRoute, PublicRoute } from './components/auth/ProtectedRoute';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { DesignSystemShowcase } from './components/design-system/DesignSystemShowcase';
 import { ComingSoon } from './components/pages/ComingSoon';
+import { PermissionsDemo } from './components/pages/PermissionsDemo';
+import { Estoque } from './components/pages/Estoque';
 import { CheckCircle, XCircle, AlertTriangle, Database, Globe, Settings, Zap } from 'lucide-react';
 
 function Home() {
@@ -344,53 +346,58 @@ function App() {
             <DesignSystemShowcase />
           </ProtectedRoute>
         } />
-        <Route path="/balcao" element={
+        <Route path="/permissions-demo" element={
           <ProtectedRoute>
+            <PermissionsDemo />
+          </ProtectedRoute>
+        } />
+        <Route path="/balcao" element={
+          <ProtectedRoute permission="manage_counter">
             <ComingSoon title="Balcão" description="Sistema de atendimento rápido no balcão" icon="🛒" />
           </ProtectedRoute>
         } />
         <Route path="/mesas" element={
-          <ProtectedRoute>
+          <ProtectedRoute permission="manage_tables">
             <ComingSoon title="Mesas" description="Gestão de mesas e comandas" icon="🪑" />
           </ProtectedRoute>
         } />
         <Route path="/cozinha" element={
-          <ProtectedRoute>
+          <ProtectedRoute permission="view_kitchen">
             <ComingSoon title="Cozinha" description="Interface de visualização para a cozinha" icon="👨‍🍳" />
           </ProtectedRoute>
         } />
         <Route path="/bar" element={
-          <ProtectedRoute>
+          <ProtectedRoute permission="view_bar">
             <ComingSoon title="Bar" description="Interface de visualização para o bar" icon="🍹" />
           </ProtectedRoute>
         } />
         <Route path="/caixa" element={
-          <ProtectedRoute>
+          <ProtectedRoute permission="manage_cashier">
             <ComingSoon title="Caixa" description="Gestão de caixa e pagamentos" icon="💰" />
           </ProtectedRoute>
         } />
         <Route path="/cardapio" element={
-          <ProtectedRoute>
+          <ProtectedRoute permission="manage_menu">
             <ComingSoon title="Cardápio" description="Gestão de produtos e categorias" icon="📋" />
           </ProtectedRoute>
         } />
         <Route path="/estoque" element={
-          <ProtectedRoute>
-            <ComingSoon title="Estoque" description="Controle de estoque e inventário" icon="📦" />
+          <ProtectedRoute permission="manage_stock">
+            <Estoque />
           </ProtectedRoute>
         } />
         <Route path="/clientes" element={
-          <ProtectedRoute>
+          <ProtectedRoute permission="manage_customers">
             <ComingSoon title="Clientes" description="Gestão de clientes e fidelidade" icon="👥" />
           </ProtectedRoute>
         } />
         <Route path="/relatorios" element={
-          <ProtectedRoute>
+          <ProtectedRoute permission="view_reports">
             <ComingSoon title="Relatórios" description="Análises e métricas do negócio" icon="📊" />
           </ProtectedRoute>
         } />
         <Route path="/configuracoes" element={
-          <ProtectedRoute>
+          <ProtectedRoute permission="manage_settings">
             <ComingSoon title="Configurações" description="Configurações do sistema" icon="⚙️" />
           </ProtectedRoute>
         } />
